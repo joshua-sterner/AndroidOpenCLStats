@@ -122,7 +122,9 @@ auto logDeviceValue<CL_DEVICE_LOCAL_MEM_TYPE>(cl::Device device) {
     return logDeviceLocalMemType(value);
 }
 
-std::string logDeviceExecutionCapabilities(cl_device_exec_capabilities value) {
+template<>
+auto logDeviceValue<CL_DEVICE_EXECUTION_CAPABILITIES>(cl::Device device) {
+    auto value = device.getInfo<CL_DEVICE_EXECUTION_CAPABILITIES>();
     std::vector<std::string> types;
     LOG_PUSH_BACK_FLAG(value, types, CL_EXEC_KERNEL);
     LOG_PUSH_BACK_FLAG(value, types, CL_EXEC_NATIVE_KERNEL);
@@ -130,9 +132,40 @@ std::string logDeviceExecutionCapabilities(cl_device_exec_capabilities value) {
 }
 
 template<>
-auto logDeviceValue<CL_DEVICE_EXECUTION_CAPABILITIES>(cl::Device device) {
-    auto value = device.getInfo<CL_DEVICE_EXECUTION_CAPABILITIES>();
-    return logDeviceExecutionCapabilities(value);
+auto logDeviceValue<CL_DEVICE_QUEUE_PROPERTIES>(cl::Device device) {
+    auto value = device.getInfo<CL_DEVICE_QUEUE_PROPERTIES>();
+    std::vector<std::string> types;
+    LOG_PUSH_BACK_FLAG(value, types, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    LOG_PUSH_BACK_FLAG(value, types, CL_QUEUE_PROFILING_ENABLE);
+    return logBitfieldValue(types);
+}
+
+template<>
+auto logDeviceValue<CL_DEVICE_PARTITION_PROPERTIES>(cl::Device device) {
+    auto value_list = device.getInfo<CL_DEVICE_PARTITION_PROPERTIES>();
+    std::vector<std::string> types;
+    for (auto value : value_list) {
+        LOG_PUSH_BACK_EQ(value, types, CL_DEVICE_PARTITION_EQUALLY);
+        LOG_PUSH_BACK_EQ(value, types, CL_DEVICE_PARTITION_BY_COUNTS);
+        LOG_PUSH_BACK_EQ(value, types, CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN);
+    }
+    return logBitfieldValue(types);
+}
+
+template<>
+auto logDeviceValue<CL_DEVICE_PARTITION_AFFINITY_DOMAIN>(cl::Device device) {
+    auto value = device.getInfo<CL_DEVICE_PARTITION_AFFINITY_DOMAIN>();
+    std::vector<std::string> types;
+    LOG_PUSH_BACK_FLAG(value, types, CL_DEVICE_AFFINITY_DOMAIN_NUMA);
+    LOG_PUSH_BACK_FLAG(value, types, CL_DEVICE_AFFINITY_DOMAIN_L4_CACHE);
+    LOG_PUSH_BACK_FLAG(value, types, CL_DEVICE_AFFINITY_DOMAIN_L3_CACHE);
+    LOG_PUSH_BACK_FLAG(value, types, CL_DEVICE_AFFINITY_DOMAIN_L2_CACHE);
+    LOG_PUSH_BACK_FLAG(value, types, CL_DEVICE_AFFINITY_DOMAIN_L1_CACHE);
+    LOG_PUSH_BACK_FLAG(value, types, CL_DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE);
+    if (types.size() == 0) {
+        return std::string("0");
+    }
+    return logBitfieldValue(types);
 }
 
 template<cl_int NAME>
@@ -218,7 +251,7 @@ void logDeviceInfo(cl::Device device, int id, int platformID) {
     LOG_DEVICE_INFO(CL_DEVICE_COMPILER_AVAILABLE, device, id, platformID);
     LOG_DEVICE_INFO(CL_DEVICE_LINKER_AVAILABLE, device, id, platformID);
     LOG_DEVICE_INFO(CL_DEVICE_EXECUTION_CAPABILITIES, device, id, platformID);
-    //TODO LOG_DEVICE_INFO(CL_DEVICE_QUEUE_PROPERTIES, device, id, platformID);
+    LOG_DEVICE_INFO(CL_DEVICE_QUEUE_PROPERTIES, device, id, platformID);
 
     //LOG_DEVICE_INFO(CL_DEVICE_QUEUE_ON_HOST_PROPERTIES, device, id, platformID);
     //LOG_DEVICE_INFO(CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES, device, id, platformID);
@@ -227,7 +260,7 @@ void logDeviceInfo(cl::Device device, int id, int platformID) {
     //LOG_DEVICE_INFO(CL_DEVICE_MAX_ON_DEVICE_QUEUES, device, id, platformID);
     //LOG_DEVICE_INFO(CL_DEVICE_MAX_ON_DEVICE_EVENTS, device, id, platformID);
     LOG_DEVICE_INFO(CL_DEVICE_BUILT_IN_KERNELS, device, id, platformID);
-    //FIXME LOG_DEVICE_INFO(CL_DEVICE_PLATFORM, device, id, platformID);
+    //LOG_DEVICE_INFO(CL_DEVICE_PLATFORM, device, id, platformID);
     LOG_DEVICE_INFO(CL_DEVICE_NAME, device, id, platformID);
     LOG_DEVICE_INFO(CL_DEVICE_VENDOR, device, id, platformID);
     LOG_DEVICE_INFO(CL_DRIVER_VERSION, device, id, platformID);
@@ -237,11 +270,11 @@ void logDeviceInfo(cl::Device device, int id, int platformID) {
     LOG_DEVICE_INFO(CL_DEVICE_EXTENSIONS, device, id, platformID);
     LOG_DEVICE_INFO(CL_DEVICE_PRINTF_BUFFER_SIZE, device, id, platformID);
     LOG_DEVICE_INFO(CL_DEVICE_PREFERRED_INTEROP_USER_SYNC, device, id, platformID); //TODO getting weird results from this...
-    //FIXME LOG_DEVICE_INFO(CL_DEVICE_PARENT_DEVICE, device, id, platformID);
+    //LOG_DEVICE_INFO(CL_DEVICE_PARENT_DEVICE, device, id, platformID);
     LOG_DEVICE_INFO(CL_DEVICE_PARTITION_MAX_SUB_DEVICES, device, id, platformID);
-    //TODO LOG_DEVICE_INFO(CL_DEVICE_PARTITION_PROPERTIES, device, id, platformID);
-    //TODO LOG_DEVICE_INFO(CL_DEVICE_PARTITION_AFFINITY_DOMAIN, device, id, platformID);
-    //TODO LOG_DEVICE_INFO(CL_DEVICE_PARTITION_TYPE, device, id, platformID);
+    LOG_DEVICE_INFO(CL_DEVICE_PARTITION_PROPERTIES, device, id, platformID);
+    LOG_DEVICE_INFO(CL_DEVICE_PARTITION_AFFINITY_DOMAIN, device, id, platformID);
+    //LOG_DEVICE_INFO(CL_DEVICE_PARTITION_TYPE, device, id, platformID);
     LOG_DEVICE_INFO(CL_DEVICE_REFERENCE_COUNT, device, id, platformID);
     //LOG_DEVICE_INFO(CL_DEVICE_SVM_CAPABILITIES, device, id, platformID);
     //LOG_DEVICE_INFO(CL_DEVICE_PREFERRED_PLATFORM_ATOMIC_ALIGNMENT, device, id, platformID);
