@@ -1,0 +1,3 @@
+[submodule "ext/libopencl-stub"]
+	path = ext/libopencl-stub
+	url = https://github.com/joshua-sterner/libopencl-stub.git
